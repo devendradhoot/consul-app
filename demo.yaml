@@ -1,0 +1,73 @@
+global:
+  datacenter: dc1
+  image:  "hashicorp/consul:latest"
+  #  image: "hashicorp/consul:latest"
+  imageK8S: "hashicorp/consul-k8s:latest"
+  #Added Envoy
+imageEnvoy: "envoyproxy/envoy:v1.17.0"
+
+# Expose the Consul UI through this LoadBalancer
+server:
+  enabled: true
+  replicas: 3
+  bootstrapExpect: 3
+  extraConfig: |
+   {
+     "ui_config": {
+       "enabled": true,
+       "metrics_provider": "prometheus",
+       "metrics_proxy": {
+         "base_url": "http://prometheus-server"
+       }
+     }
+   }
+dns:
+  enabled: true
+federation:
+    enabled: true
+
+client:
+  enabled: true
+  grpc: true
+
+ui:
+  service:
+    type: "LoadBalancer"
+  enabled: true
+# Allow Consul to inject the Connect proxy into Kubernetes containers
+connectInject:
+  enabled: true
+  #  imageEnvoy: "envoyproxy/envoy:v1.17.0"
+  centralConfig:
+     enabled: true
+  proxyDefaults: |
+      {
+        "envoy_prometheus_bind_addr": "0.0.0.0:9102"
+      }
+  k8sAllowNamespaces: ['*']
+  k8sDenyManespaces: []
+controller:
+    enabled: true
+    #acls:
+    #manageSystemACLs: true
+    #createReplicationToken: true    
+meshGateway:
+  enabled: true
+  # Added this below line
+  replicas: 3
+ingressGateways:
+  enabled: true
+  gateways:
+    - name: ingress-gateway
+      service:
+        type: LoadBalancer
+        ports: 
+        - port: 8080
+terminatingGateways:
+  enabled: true 
+syncCatalog:
+  enabled: true
+  default: false
+  k8sAllowNamespaces: ['*']
+server.affinity: ""
+#Added new lines
