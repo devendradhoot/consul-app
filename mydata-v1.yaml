@@ -1,0 +1,85 @@
+---
+#################################################
+# ConfigMap for index.html for mydata v1
+#################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mydata-cm-v1
+data:
+  index.html: |
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <body bgcolor="green">
+      <center>
+        <h1><font color="yellow">HashiCorp Squad</font></h1>
+        <h1><font color="yellow">Version 1</font></h1>
+      </center>
+    </body>
+---
+#################################################
+# Service: mydata
+#################################################
+#apiVersion: v1
+#kind: Service
+#metadata:
+# name: mydata
+#  labels:
+#    app: mydata
+#spec:
+#  ports:
+#  - name: http
+#    port: 80
+#  selector:
+#    app: mydata
+#
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mydata
+  labels:
+    account: mydata
+
+#################################################
+# Deployment: mydata v1
+#################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydata-v1
+  labels:
+    app: mydata
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mydata
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: mydata
+        version: v1
+      annotations:
+        "prometheus.io/scrape": "true"
+        "prometheus.io/port": "9102"
+        "consul.hashicorp.com/connect-inject": "true"
+        "consul.hashicorp.com/connect-service-port": "80"
+        "consul.hashicorp.com/service-meta-version": "v1"
+    spec:
+      containers:
+      - image: nginx
+        name: mydata
+        volumeMounts:
+        - name: index-html
+          mountPath: /usr/share/nginx/html
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: index-html
+        configMap:
+          name: mydata-cm-v1
+          #serviceAccountName: mydata
